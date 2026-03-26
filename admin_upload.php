@@ -6,6 +6,8 @@ if (!isset($_SESSION['admin'])) {
     if (isset($_POST['password'])) {
         if ($_POST['password'] === 'admin123') {
             $_SESSION['admin'] = true;
+            header("Location: admin_dashboard.php");
+            exit();
         } else {
             $login_error = "Wrong password.";
         }
@@ -155,6 +157,7 @@ if (isset($_POST['submit'])) {
     <?php if ($error != "")   { echo "<p class='error'>$error</p>"; } ?>
 
     <div class="logout">
+    <a href="admin_dashboard.php" style="color:#d4af37; margin-right:15px;">Dashboard</a>
     <a href="admin_products.php" style="color:#d4af37; margin-right:15px;">Manage Products</a>
     <a href="?logout=1" style="color:#888;">Logout</a>
     </div>

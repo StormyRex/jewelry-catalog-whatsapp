@@ -95,7 +95,9 @@ $result = mysqli_query($conn, "SELECT * FROM products ORDER BY created_at DESC")
                 <td>" . $row['name'] . "</td>
                 <td>" . $row['category'] . "</td>
                 <td>&#8377;" . $row['price'] . "</td>
-                <td><a class='delete-btn' href='admin_products.php?delete_id=" . $row['id'] . "' onclick=\"return confirm('Delete this product?')\">Delete</a></td>
+                <td><a href='admin_edit.php?id=" . $row['id'] . "' style='padding:6px 12px; background:#d4af37; color:#111; border-radius:5px; text-decoration:none; font-size:13px; margin-right:5px;'>Edit</a>
+                    <a class='delete-btn' href='admin_products.php?delete_id=" . $row['id'] . "' onclick=\"return confirm('Delete this product?')\">Delete</a>
+                </td>
             </tr>";
         }
     }

@@ -1,5 +1,6 @@
 <?php
 session_start();
+require_once 'db_connect.php';
 
 if (!isset($_SESSION['cart'])) {
     $_SESSION['cart'] = array();
@@ -37,13 +38,21 @@ if (isset($_GET['clear'])) {
 }
 
 // Build WhatsApp message from cart
-$total   = 0;
-$message = "Hi! I am interested in ordering the following items:%0A%0A";
-$i       = 1;
-foreach ($_SESSION['cart'] as $item) {
-    $message .= $i . ". " . urlencode($item['name']) . " - Rs." . $item['price'] . "%0A";
-    $total += $item['price'];
-    $i++;
+$total        = 0;
+$message      = "Hi! I am interested in ordering the following items:%0A%0A";
+$i            = 1;
+$has_instock  = false;
+
+foreach ($_SESSION['cart'] as $id => $item) {
+    $check  = mysqli_query($conn, "SELECT in_stock FROM products WHERE id = $id");
+    $status = mysqli_fetch_assoc($check);
+
+    if ($status && $status['in_stock'] == 1) {
+        $message .= $i . ". " . urlencode($item['name']) . " - Rs." . $item['price'] . "%0A";
+        $total += $item['price'];
+        $i++;
+        $has_instock = true;
+    }
 }
 $message .= "%0ATotal: Rs.$total%0A%0APlease confirm availability.";
 $wa_link  = "https://wa.me/$phone?text=$message";
@@ -123,19 +132,27 @@ $wa_link  = "https://wa.me/$phone?text=$message";
             </tr>
         </thead>
         <tbody>
-        <?php foreach ($_SESSION['cart'] as $id => $item): ?>
-            <tr>
-                <td><?php echo $item['name']; ?></td>
-                <td>&#8377;<?php echo $item['price']; ?></td>
-                <td><a href="cart.php?remove=<?php echo $id; ?>" class="remove-btn">Remove</a></td>
-            </tr>
+        <?php foreach ($_SESSION['cart'] as $id => $item): 
+                $check  = mysqli_query($conn, "SELECT in_stock FROM products WHERE id = $id");
+                $status = mysqli_fetch_assoc($check);
+                $out    = ($status && $status['in_stock'] == 0);
+        ?>
+                    <tr>
+                        <td><?php echo $item['name']; ?> <?php if($out) echo "<span style='color:#e74c3c; font-size:12px;'>(Out of Stock)</span>"; ?></td>
+                        <td>&#8377;<?php echo $item['price']; ?></td>
+                        <td><a href="cart.php?remove=<?php echo $id; ?>" class="remove-btn">Remove</a></td>
+                    </tr>
         <?php endforeach; ?>
         </tbody>
     </table>
 
     <div class="summary">
         <div class="total">Total: &#8377;<?php echo $total; ?></div>
-        <a href="<?php echo $wa_link; ?>" class="wa-btn" target="_blank">Order All on WhatsApp</a>
+        <?php if ($has_instock): ?>
+            <a href="<?php echo $wa_link; ?>" class="wa-btn" target="_blank">Order All on WhatsApp</a>
+        <?php else: ?>
+            <p style="color:#e74c3c; text-align:center; margin-bottom:10px;">All items in your cart are out of stock.</p>
+        <?php endif; ?>
         <a href="cart.php?clear=1" class="clear-btn">Clear Cart</a>
     </div>
 <?php endif; ?>

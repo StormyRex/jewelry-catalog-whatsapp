@@ -183,7 +183,9 @@ $cat_result = mysqli_query($conn, "SELECT DISTINCT category FROM products ORDER 
             <?php
             while ($cat = mysqli_fetch_assoc($cat_result)) {
                 $selected = ($category == $cat['category']) ? "selected" : "";
-                echo "<option value='" . $cat['category'] . "' $selected>" . $cat['category'] . "</option>";
+                $count_result = mysqli_query($conn, "SELECT COUNT(*) as total FROM products WHERE category = '" . $cat['category'] . "' AND in_stock = 1");
+                $count_row    = mysqli_fetch_assoc($count_result);
+                echo "<option value='" . $cat['category'] . "' $selected>" . $cat['category'] . " (" . $count_row['total'] . ")</option>";
             }
             ?>
         </select>
@@ -221,21 +223,30 @@ if ($count == 0) {
         $wa_link    = "https://wa.me/$phone?text=$wa_message";
         echo "
         <div class='card'>
-            <img src='images/" . $row['image_file'] . "' alt='" . $row['name'] . "'>
+            <div style='position:relative;'>
+                <a href='product.php?id=" . $row['id'] . "'>
+                    <img src='images/" . $row['image_file'] . "' alt='" . $row['name'] . "' style='width:100%; height:200px; object-fit:cover; display:block;'>
+                </a>
+                " . ($row['in_stock'] == 0 ? "<div style='position:absolute; top:10px; left:10px; background:#e74c3c; color:#fff; padding:4px 10px; border-radius:4px; font-size:12px; font-weight:bold;'>Out of Stock</div>" : "") . "
+            </div>
             <div class='card-body'>
                 <div class='category'>" . $row['category'] . "</div>
-                <h3>" . $row['name'] . "</h3>
+                <h3><a href='product.php?id=" . $row['id'] . "' style='color:#fff; text-decoration:none;'>" . $row['name'] . "</a></h3>
                 <div class='price'>&#8377;" . $row['price'] . "</div>
                 <div class='desc'>" . $row['description'] . "</div>
-                <a href='" . $wa_link . "' class='whatsapp-btn' target='_blank'>Order Now</a>
-                <form method='POST' action='cart.php'>
-                    <input type='hidden' name='id'    value='" . $row['id'] . "'>
-                    <input type='hidden' name='name'  value='" . $row['name'] . "'>
-                    <input type='hidden' name='price' value='" . $row['price'] . "'>
-                    <input type='hidden' name='action' value='add'>
-                    <input type='hidden' name='redirect' value='" . $_SERVER['REQUEST_URI'] . "'>
-                    <button type='submit' class='cart-btn'>" . ($in_cart ? "✓ Added" : "+ Add to Cart") . "</button>
-                </form>
+                " . ($row['in_stock'] == 1 
+                        ? "<a href='" . $wa_link . "' class='whatsapp-btn' target='_blank'>Order Now</a>"
+                        : "<div style='width:100%; padding:10px; background:#2a2a2a; color:#e74c3c; text-align:center; border-radius:6px; font-weight:bold; font-size:14px;'>Out of Stock</div>"
+                ) . "   
+            " . ($row['in_stock'] == 1 ? "
+            <form method='POST' action='cart.php'>
+                <input type='hidden' name='id'    value='" . $row['id'] . "'>
+                <input type='hidden' name='name'  value='" . $row['name'] . "'>
+                <input type='hidden' name='price' value='" . $row['price'] . "'>
+                <input type='hidden' name='action' value='add'>
+                <input type='hidden' name='redirect' value='" . $_SERVER['REQUEST_URI'] . "'>
+                <button type='submit' class='cart-btn'>" . ($in_cart ? "✓ Added" : "+ Add to Cart") . "</button>
+            </form>" : "") . "
             </div>
         </div>";
     }
